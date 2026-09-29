@@ -1,0 +1,3057 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Агент урока</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Inter, Arial, sans-serif;
+            background: #f4f7fb;
+            color: #172033;
+        }
+
+        button,
+        input,
+        textarea,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+        }
+
+        /* =========================
+           HEADER
+        ========================== */
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e7ebf2;
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 13px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 21px;
+        }
+
+        .logo h1 {
+            font-size: 19px;
+        }
+
+        .logo span {
+            font-size: 12px;
+            color: #8892a7;
+        }
+
+        .ai-live {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px 15px;
+            background: #eefbf3;
+            color: #168447;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .live-dot {
+            width: 9px;
+            height: 9px;
+            background: #20bf63;
+            border-radius: 50%;
+            box-shadow: 0 0 0 5px rgba(32,191,99,.12);
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: .35;
+                transform: scale(.85);
+            }
+        }
+
+        /* =========================
+           LAYOUT
+        ========================== */
+
+        .container {
+            max-width: 1450px;
+            margin: auto;
+            padding: 28px;
+        }
+
+        .lesson-header {
+            background: linear-gradient(135deg, #312e81, #4f46e5);
+            color: white;
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 22px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lesson-header::after {
+            content: "";
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.08);
+            position: absolute;
+            right: -80px;
+            top: -80px;
+        }
+
+        .lesson-header p {
+            color: #dfe3ff;
+            margin-top: 7px;
+        }
+
+        .lesson-title {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 22px;
+        }
+
+        .left,
+        .right {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        /* =========================
+           CARDS
+        ========================== */
+
+        .card {
+            background: white;
+            border: 1px solid #e8edf4;
+            border-radius: 20px;
+            padding: 22px;
+            box-shadow: 0 8px 30px rgba(35, 45, 65, .04);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 800;
+        }
+
+        .muted {
+            color: #8b95a7;
+            font-size: 13px;
+        }
+
+        /* =========================
+           STATS
+        ========================== */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .stat {
+            background: #f8faff;
+            border: 1px solid #e8edf4;
+            border-radius: 16px;
+            padding: 17px;
+        }
+
+        .stat-number {
+            font-size: 27px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f899c;
+        }
+
+        .green {
+            color: #17924d;
+        }
+
+        .yellow {
+            color: #dc9a00;
+        }
+
+        .red {
+            color: #df4141;
+        }
+
+        /* =========================
+           BUTTONS
+        ========================== */
+
+        .btn {
+            padding: 11px 15px;
+            border-radius: 11px;
+            font-weight: 700;
+            transition: .2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #eef1f8;
+            color: #394357;
+        }
+
+        .btn-success {
+            background: #eaf9f0;
+            color: #148048;
+        }
+
+        .btn-warning {
+            background: #fff6dc;
+            color: #a57400;
+        }
+
+        .btn-danger {
+            background: #fff0f0;
+            color: #c93636;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* =========================
+           CLASS MAP
+        ========================== */
+
+        .class-map {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .computer {
+            border: 1px solid #e8edf4;
+            border-radius: 15px;
+            padding: 14px;
+            background: #fbfcfe;
+            transition: .2s;
+            cursor: pointer;
+        }
+
+        .computer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(30,40,60,.08);
+        }
+
+        .computer-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 9px;
+        }
+
+        .pc-name {
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .status-green {
+            background: #25b864;
+        }
+
+        .status-yellow {
+            background: #eeb328;
+        }
+
+        .status-red {
+            background: #e44c4c;
+        }
+
+        .student-name {
+            font-size: 12px;
+            color: #667085;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* =========================
+           STUDENT LIST
+        ========================== */
+
+        .student-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .student {
+            border: 1px solid #edf0f5;
+            padding: 14px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .avatar {
+            width: 39px;
+            height: 39px;
+            background: #ecebff;
+            color: #5148c7;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        .student-main {
+            min-width: 0;
+        }
+
+        .student-main b {
+            font-size: 14px;
+        }
+
+        .student-main small {
+            display: block;
+            color: #929aac;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            padding: 7px 10px;
+            border-radius: 9px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .badge-green {
+            background: #eaf9f0;
+            color: #158047;
+        }
+
+        .badge-yellow {
+            background: #fff6dc;
+            color: #a57500;
+        }
+
+        .badge-red {
+            background: #fff0f0;
+            color: #ce3535;
+        }
+
+        /* =========================
+           TASK / TEST
+        ========================== */
+
+        .task-box {
+            border: 1px solid #e7ebf1;
+            padding: 18px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .task-title {
+            font-weight: 800;
+            margin-bottom: 7px;
+        }
+
+        .task-description {
+            color: #697386;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 14px;
+            border: 1px solid #dfe4ed;
+            border-radius: 14px;
+            outline: none;
+            resize: vertical;
+            margin-top: 13px;
+        }
+
+        textarea:focus,
+        input:focus {
+            border-color: #7068ed;
+            box-shadow: 0 0 0 4px rgba(79,70,229,.08);
+        }
+
+        /* =========================
+           ANALYSIS
+        ========================== */
+
+        .analysis {
+            border-radius: 16px;
+            background: #f8faff;
+            padding: 18px;
+            margin-top: 15px;
+        }
+
+        .analysis-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .score {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .criterion {
+            padding: 11px 0;
+            border-bottom: 1px solid #e7ebf2;
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            font-size: 13px;
+        }
+
+        .criterion:last-child {
+            border-bottom: none;
+        }
+
+        .check {
+            font-weight: 900;
+        }
+
+        .criterion.ok .check {
+            color: #17a355;
+        }
+
+        .criterion.fail .check {
+            color: #db4141;
+        }
+
+        .ai-comment {
+            margin-top: 14px;
+            font-size: 13px;
+            line-height: 1.65;
+            color: #586275;
+        }
+
+        .hint {
+            background: #fff8e6;
+            border: 1px solid #f6e4aa;
+            padding: 14px;
+            border-radius: 12px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #765c14;
+        }
+
+        /* =========================
+           HELP PANEL
+        ========================== */
+
+        .help-item {
+            padding: 14px;
+            border: 1px solid #eceff4;
+            border-radius: 14px;
+            margin-bottom: 10px;
+        }
+
+        .help-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .help-reason {
+            color: #697386;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* =========================
+           NOTIFICATIONS
+        ========================== */
+
+        .notifications {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .notification {
+            padding: 12px 14px;
+            background: #f6f8fc;
+            border-radius: 11px;
+            font-size: 13px;
+        }
+
+        /* =========================
+           MODAL
+        ========================== */
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(18,24,38,.55);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 850px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 22px;
+            padding: 25px;
+            animation: modalIn .2s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close {
+            width: 35px;
+            height: 35px;
+            background: #f0f2f6;
+            border-radius: 10px;
+            font-size: 18px;
+        }
+
+        /* =========================
+           REPORT
+        ========================== */
+
+        .report-section {
+            margin-top: 20px;
+        }
+
+        .report-section h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .report-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 11px 0;
+            border-bottom: 1px solid #edf0f4;
+            font-size: 13px;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================== */
+
+        @media (max-width: 1050px) {
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .class-map {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 700px) {
+
+            .header {
+                padding: 14px;
+            }
+
+            .container {
+                padding: 14px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .class-map {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .lesson-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="header">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+            ✦
+        </div>
+
+        <div>
+            <h1>AI Агент урока</h1>
+            <span>Цифровой помощник преподавателя</span>
+        </div>
+
+    </div>
+
+    <div class="ai-live">
+        <div class="live-dot"></div>
+        AI LIVE
+    </div>
+
+</header>
+
+
+<main class="container">
+
+    <!-- =========================
+         LESSON HEADER
+    ========================== -->
+
+    <section class="lesson-header">
+
+        <div style="position:relative;z-index:2">
+
+            <div class="muted" style="color:#cbd0ff">
+                ТЕКУЩИЙ УРОК
+            </div>
+
+            <div class="lesson-title">
+                Основы HTML
+            </div>
+
+            <p>
+                Создание структуры HTML-документа
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         DASHBOARD
+    ========================== -->
+
+    <section class="dashboard">
+
+        <div class="left">
+
+            <!-- STATS -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="card-title">
+                            AI-анализ группы
+                        </div>
+
+                        <div class="muted">
+                            Мониторинг текущего урока
+                        </div>
+                    </div>
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="openAssistant()"
+                    >
+                        ✦ AI ASSISTANT
+                    </button>
+
+                </div>
+
+
+                <div class="stats">
+
+                    <div class="stat">
+                        <div
+                            class="stat-number"
+                            id="totalStudents"
+                        >
+                            24
+                        </div>
+
+                        <div class="stat-label">
+                            Обучающихся
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div
+                            class="stat-number green"
+                            id="greenCount"
+                        >
+                            16
+                        </div>
+
+                        <div class="stat-label">
+                            Уверенно работают
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div
+                            class="stat-number yellow"
+                            id="yellowCount"
+                        >
+                            6
+                        </div>
+
+                        <div class="stat-label">
+                            Есть затруднения
+                        </div>
+                    </div>
+
+                    <div class="stat">
+                        <div
+                            class="stat-number red"
+                            id="redCount"
+                        >
+                            2
+                        </div>
+
+                        <div class="stat-label">
+                            Требуют внимания
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- CLASS MAP -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="card-title">
+                            AI-карта класса
+                        </div>
+
+                        <div class="muted">
+                            Нажмите на компьютер
+                        </div>
+                    </div>
+
+                    <button
+                        class="btn btn-warning"
+                        onclick="showHelp()"
+                    >
+                        ✦ Кому нужна помощь?
+                    </button>
+
+                </div>
+
+                <div
+                    class="class-map"
+                    id="classMap"
+                ></div>
+
+            </div>
+
+
+            <!-- TASK -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="card-title">
+                            Рабочая тетрадь
+                        </div>
+
+                        <div class="muted">
+                            Задание №1
+                        </div>
+                    </div>
+
+                    <span
+                        class="status-badge badge-yellow"
+                    >
+                        Требует проверки
+                    </span>
+
+                </div>
+
+
+                <div class="task-box">
+
+                    <div class="task-title">
+                        Создать базовую структуру HTML-документа
+                    </div>
+
+                    <div class="task-description">
+
+                        Создайте HTML-документ.
+                        В работе должны присутствовать:
+
+                        <b>
+                            &lt;!DOCTYPE html&gt;,
+                            &lt;html&gt;,
+                            &lt;head&gt;,
+                            &lt;body&gt;
+                        </b>
+
+                    </div>
+
+                    <textarea
+                        id="studentCode"
+                        placeholder="Введите ответ или HTML-код..."
+                    ></textarea>
+
+                    <div
+                        class="actions"
+                        style="margin-top:12px"
+                    >
+
+                        <button
+                            class="btn btn-primary"
+                            onclick="checkAnswer()"
+                        >
+                            ✦ Отправить AI на проверку
+                        </button>
+
+                        <button
+                            class="btn btn-secondary"
+                            onclick="clearCode()"
+                        >
+                            Очистить
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="analysisResult"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- STUDENTS -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+                        <div class="card-title">
+                            Работа обучающихся
+                        </div>
+
+                        <div class="muted">
+                            AI анализирует результаты в реальном времени
+                        </div>
+                    </div>
+
+                </div>
+
+                <div
+                    class="student-list"
+                    id="studentList"
+                ></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             RIGHT PANEL
+        ========================== -->
+
+        <div class="right">
+
+            <!-- AI LIVE -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <div class="card-title">
+                            ✦ AI LIVE
+                        </div>
+
+                        <div class="muted">
+                            Мониторинг урока
+                        </div>
+
+                    </div>
+
+                    <div class="live-dot"></div>
+
+                </div>
+
+                <div
+                    class="notifications"
+                    id="notifications"
+                ></div>
+
+            </div>
+
+
+            <!-- HELP -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <div class="card-title">
+                            Требуют внимания
+                        </div>
+
+                        <div class="muted">
+                            AI определяет затруднения
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div
+                    id="helpList"
+                ></div>
+
+            </div>
+
+
+            <!-- LESSON CONTROL -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <div class="card-title">
+                            Управление уроком
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="actions">
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="analyzeGroup()"
+                    >
+                        ✦ Проанализировать тетради
+                    </button>
+
+                    <button
+                        class="btn btn-success"
+                        onclick="lessonSummary()"
+                    >
+                        ✦ Подвести итог урока
+                    </button>
+
+                    <button
+                        class="btn btn-secondary"
+                        onclick="exportReport()"
+                    >
+                        ↓ AI Lesson Report
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =========================
+     MODAL
+========================== -->
+
+<div
+    class="modal"
+    id="modal"
+>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <div>
+
+                <div
+                    class="card-title"
+                    id="modalTitle"
+                >
+                    AI Assistant
+                </div>
+
+                <div
+                    class="muted"
+                    id="modalSubtitle"
+                ></div>
+
+            </div>
+
+            <button
+                class="close"
+                onclick="closeModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div id="modalBody"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+/* =========================================================
+   AI AGENT
+========================================================= */
+
+class AIAgent {
+
+    constructor() {
+
+        this.tasks = [
+
+            {
+                id: 1,
+
+                title:
+                    "Создать базовую структуру HTML-документа",
+
+                maxScore: 10,
+
+                criteria: [
+
+                    {
+                        id: "doctype",
+                        title:
+                            "Присутствует <!DOCTYPE html>",
+                        check:
+                            code =>
+                                /<!doctype\s+html>/i.test(code)
+                    },
+
+                    {
+                        id: "html",
+                        title:
+                            "Присутствует <html>",
+                        check:
+                            code =>
+                                /<html\b/i.test(code)
+                    },
+
+                    {
+                        id: "head",
+                        title:
+                            "Присутствует <head>",
+                        check:
+                            code =>
+                                /<head\b/i.test(code)
+                    },
+
+                    {
+                        id: "body",
+                        title:
+                            "Присутствует <body>",
+                        check:
+                            code =>
+                                /<body\b/i.test(code)
+                    }
+                ]
+            },
+
+            {
+                id: 2,
+
+                title:
+                    "Использовать HTML-элементы",
+
+                maxScore: 10,
+
+                criteria: [
+
+                    {
+                        id: "h1",
+                        title:
+                            "Используется <h1>",
+                        check:
+                            code =>
+                                /<h1\b/i.test(code)
+                    },
+
+                    {
+                        id: "p",
+                        title:
+                            "Используется <p>",
+                        check:
+                            code =>
+                                /<p\b/i.test(code)
+                    },
+
+                    {
+                        id: "img",
+                        title:
+                            "Используется <img>",
+                        check:
+                            code =>
+                                /<img\b/i.test(code)
+                    },
+
+                    {
+                        id: "a",
+                        title:
+                            "Используется <a>",
+                        check:
+                            code =>
+                                /<a\b/i.test(code)
+                    },
+
+                    {
+                        id: "href",
+                        title:
+                            "Указан атрибут href",
+                        check:
+                            code =>
+                                /href\s*=/i.test(code)
+                    }
+
+                ]
+            }
+        ];
+
+
+        this.students = this.createStudents();
+
+        this.history = [];
+
+        this.load();
+    }
+
+
+    createStudents() {
+
+        const names = [
+
+            "Айдос Серік",
+            "Данияр",
+            "Алина",
+            "Арман",
+            "Диас",
+            "Аружан",
+            "Мадина",
+            "Нурсултан",
+            "Алия",
+            "Дамир",
+            "Жанель",
+            "Ерасыл",
+            "Айша",
+            "Тимур",
+            "Санжар",
+            "Амина",
+            "Руслан",
+            "Камила",
+            "Ерлан",
+            "Меруерт",
+            "Мирас",
+            "Назерке",
+            "Адиль",
+            "София"
+
+        ];
+
+
+        return names.map(
+            (name, index) => ({
+
+                id:
+                    index + 1,
+
+                name,
+
+                computer:
+                    `ПК №${String(index + 1)
+                        .padStart(2, "0")}`,
+
+                status:
+                    index < 16
+                        ? "green"
+                        : index < 22
+                            ? "yellow"
+                            : "red",
+
+                currentTask:
+                    1,
+
+                errors: index < 16
+                    ? 0
+                    : index < 22
+                        ? 1
+                        : 3,
+
+                hints: index < 16
+                    ? 0
+                    : index < 22
+                        ? 1
+                        : 3,
+
+                lastActivity:
+                    index < 22
+                        ? Date.now()
+                        : Date.now()
+                            - 8 * 60 * 1000
+            })
+        );
+    }
+
+
+    save() {
+
+        localStorage.setItem(
+            "lessonAIData",
+            JSON.stringify({
+                students: this.students,
+                history: this.history
+            })
+        );
+    }
+
+
+    load() {
+
+        const data =
+            localStorage.getItem(
+                "lessonAIData"
+            );
+
+        if (!data) return;
+
+        try {
+
+            const parsed =
+                JSON.parse(data);
+
+            if (parsed.students) {
+                this.students =
+                    parsed.students;
+            }
+
+            if (parsed.history) {
+                this.history =
+                    parsed.history;
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Не удалось загрузить данные"
+            );
+        }
+    }
+
+
+    check(code) {
+
+        const task =
+            this.tasks[0];
+
+        const results =
+            task.criteria.map(
+                criterion => ({
+
+                    ...criterion,
+
+                    passed:
+                        criterion.check(code)
+
+                })
+            );
+
+
+        const passed =
+            results.filter(
+                item => item.passed
+            ).length;
+
+
+        const percentage =
+            Math.round(
+                (passed /
+                    results.length) * 100
+            );
+
+
+        let status =
+            "needs";
+
+        if (percentage === 100) {
+            status = "correct";
+        } else if (percentage >= 50) {
+            status = "partial";
+        }
+
+
+        const failed =
+            results.filter(
+                item => !item.passed
+            );
+
+
+        return {
+
+            results,
+
+            score:
+                Math.round(
+                    percentage / 10
+                ),
+
+            maxScore:
+                task.maxScore,
+
+            percentage,
+
+            status,
+
+            comment:
+                this.comment(
+                    passed,
+                    results.length,
+                    failed
+                ),
+
+            hint:
+                this.hint(
+                    failed
+                ),
+
+            recommendation:
+                this.recommendation(
+                    failed
+                )
+
+        };
+    }
+
+
+    comment(
+        passed,
+        total,
+        failed
+    ) {
+
+        if (passed === total) {
+
+            return `
+                Все критерии выполнены.
+                Структура HTML сформирована правильно.
+            `;
+        }
+
+
+        let text =
+            `${passed} из ${total} критериев выполнены. `;
+
+
+        if (failed.length) {
+
+            text +=
+                "Необходимо обратить внимание на: " +
+                failed
+                    .map(item => item.title)
+                    .join(", ") +
+                ".";
+        }
+
+
+        return text;
+    }
+
+
+    hint(failed) {
+
+        if (!failed.length) {
+
+            return null;
+        }
+
+
+        const first =
+            failed[0];
+
+
+        if (
+            first.id === "body"
+        ) {
+
+            return `
+                Проверь, в каком элементе HTML-документа
+                располагается основное содержимое страницы,
+                которое видит пользователь.
+            `;
+        }
+
+
+        if (
+            first.id === "doctype"
+        ) {
+
+            return `
+                Проверь первую строку HTML-документа.
+                Она сообщает браузеру, какой стандарт HTML используется.
+            `;
+        }
+
+
+        return `
+            Проверь условие задания
+            и сравни свою работу с указанными критериями.
+        `;
+    }
+
+
+    recommendation(failed) {
+
+        if (!failed.length) {
+
+            return `
+                Можно переходить к следующему заданию.
+            `;
+        }
+
+
+        return `
+            Рекомендуется исправить указанные ошибки
+            и отправить работу на повторную проверку.
+        `;
+    }
+
+
+    analyzeGroup() {
+
+        let green = 0;
+        let yellow = 0;
+        let red = 0;
+
+
+        this.students.forEach(student => {
+
+            if (student.status === "green") {
+                green++;
+            }
+
+            if (student.status === "yellow") {
+                yellow++;
+            }
+
+            if (student.status === "red") {
+                red++;
+            }
+
+        });
+
+
+        return {
+
+            total:
+                this.students.length,
+
+            green,
+
+            yellow,
+
+            red,
+
+            help:
+                this.students
+                    .filter(
+                        student =>
+                            student.status === "red"
+                    )
+
+        };
+    }
+
+
+    getHelpStudents() {
+
+        return this.students
+            .filter(
+                student =>
+                    student.status === "red"
+            );
+    }
+
+
+    completeTask() {
+
+        this.history.push({
+
+            type:
+                "task_completed",
+
+            date:
+                new Date().toISOString()
+
+        });
+
+        this.save();
+    }
+
+
+    report() {
+
+        const group =
+            this.analyzeGroup();
+
+
+        return {
+
+            students:
+                group.total,
+
+            green:
+                group.green,
+
+            yellow:
+                group.yellow,
+
+            red:
+                group.red,
+
+            completed:
+                21,
+
+            criteria:
+                18,
+
+            commonMistake:
+                "неправильное использование атрибутов href и src",
+
+            aiHints:
+                this.students.reduce(
+                    (sum, s) =>
+                        sum + s.hints,
+                    0
+                ),
+
+            recommendation:
+                "Предусмотреть короткое закрепляющее задание по работе с HTML-атрибутами."
+
+        };
+    }
+}
+
+
+/* =========================================================
+   INIT
+========================================================= */
+
+const ai =
+    new AIAgent();
+
+
+/* =========================================================
+   RENDER CLASS MAP
+========================================================= */
+
+function renderClassMap() {
+
+    const container =
+        document.getElementById(
+            "classMap"
+        );
+
+
+    container.innerHTML = "";
+
+
+    ai.students.forEach(
+        student => {
+
+            const computer =
+                document.createElement(
+                    "div"
+                );
+
+
+            computer.className =
+                "computer";
+
+
+            computer.onclick =
+                () => openStudent(student);
+
+
+            computer.innerHTML = `
+
+                <div class="computer-top">
+
+                    <div class="pc-name">
+                        ${student.computer}
+                    </div>
+
+                    <div
+                        class="status-dot
+                        status-${student.status}"
+                    ></div>
+
+                </div>
+
+                <div class="student-name">
+                    ${student.name}
+                </div>
+
+            `;
+
+
+            container.appendChild(
+                computer
+            );
+
+        }
+    );
+}
+
+
+/* =========================================================
+   RENDER STUDENTS
+========================================================= */
+
+function renderStudents() {
+
+    const container =
+        document.getElementById(
+            "studentList"
+        );
+
+
+    container.innerHTML = "";
+
+
+    ai.students.forEach(
+        student => {
+
+            let label =
+                "Работает уверенно";
+
+            if (
+                student.status === "yellow"
+            ) {
+
+                label =
+                    "Есть затруднения";
+            }
+
+
+            if (
+                student.status === "red"
+            ) {
+
+                label =
+                    "Требует внимания";
+            }
+
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "student";
+
+
+            const first =
+                student.name
+                    .split(" ")[0];
+
+
+            item.innerHTML = `
+
+                <div class="student-info">
+
+                    <div class="avatar">
+                        ${first.charAt(0)}
+                    </div>
+
+                    <div class="student-main">
+
+                        <b>
+                            ${student.name}
+                        </b>
+
+                        <small>
+                            ${student.computer}
+                        </small>
+
+                    </div>
+
+                </div>
+
+                <div
+                    class="status-badge
+                    badge-${student.status}"
+                >
+                    ${label}
+                </div>
+
+            `;
+
+
+            container.appendChild(
+                item
+            );
+
+        }
+    );
+}
+
+
+/* =========================================================
+   UPDATE STATS
+========================================================= */
+
+function updateStats() {
+
+    const data =
+        ai.analyzeGroup();
+
+
+    document.getElementById(
+        "totalStudents"
+    ).textContent =
+        data.total;
+
+
+    document.getElementById(
+        "greenCount"
+    ).textContent =
+        data.green;
+
+
+    document.getElementById(
+        "yellowCount"
+    ).textContent =
+        data.yellow;
+
+
+    document.getElementById(
+        "redCount"
+    ).textContent =
+        data.red;
+}
+
+
+/* =========================================================
+   LIVE NOTIFICATIONS
+========================================================= */
+
+function renderNotifications() {
+
+    const container =
+        document.getElementById(
+            "notifications"
+        );
+
+
+    const data =
+        ai.analyzeGroup();
+
+
+    let notifications = [];
+
+
+    const needHelp =
+        data.red + data.yellow;
+
+
+    if (needHelp > 0) {
+
+        notifications.push(
+            `✦ ${needHelp} обучающимся может потребоваться помощь`
+        );
+    }
+
+
+    const repeated =
+        data.help.length;
+
+
+    if (repeated >= 2) {
+
+        notifications.push(
+            `✦ ${repeated} обучающихся требуют внимания`
+        );
+    }
+
+
+    notifications.push(
+        "✦ AI анализирует рабочие тетради"
+    );
+
+
+    notifications.push(
+        "✦ Отслеживается прогресс текущего задания"
+    );
+
+
+    container.innerHTML =
+        notifications
+            .map(
+                notification =>
+                    `<div class="notification">
+                        ${notification}
+                    </div>`
+            )
+            .join("");
+}
+
+
+/* =========================================================
+   HELP
+========================================================= */
+
+function renderHelp() {
+
+    const container =
+        document.getElementById(
+            "helpList"
+        );
+
+
+    const students =
+        ai.getHelpStudents();
+
+
+    if (!students.length) {
+
+        container.innerHTML = `
+            <div class="notification">
+                ✓ Сейчас все обучающиеся работают без критических затруднений.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        students
+            .map(
+                student => `
+
+                    <div class="help-item">
+
+                        <div class="help-top">
+
+                            <b>
+                                ${student.computer}
+                                — ${student.name}
+                            </b>
+
+                            <span
+                                class="status-badge badge-red"
+                            >
+                                Внимание
+                            </span>
+
+                        </div>
+
+                        <div
+                            class="help-reason"
+                        >
+
+                            ${getHelpReason(student)}
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join("");
+}
+
+
+function getHelpReason(student) {
+
+    if (student.errors >= 3) {
+
+        return `
+            Повторил одну и ту же ошибку
+            несколько раз.
+        `;
+    }
+
+
+    if (
+        Date.now() -
+        student.lastActivity
+        > 6 * 60 * 1000
+    ) {
+
+        return `
+            Не выполняет текущее задание
+            более 6 минут.
+        `;
+    }
+
+
+    return `
+        Результат не соответствует
+        нескольким критериям задания.
+    `;
+}
+
+
+/* =========================================================
+   CHECK ANSWER
+========================================================= */
+
+function checkAnswer() {
+
+    const code =
+        document.getElementById(
+            "studentCode"
+        ).value;
+
+
+    if (!code.trim()) {
+
+        alert(
+            "Введите ответ перед проверкой."
+        );
+
+        return;
+    }
+
+
+    const result =
+        ai.check(code);
+
+
+    const container =
+        document.getElementById(
+            "analysisResult"
+        );
+
+
+    let statusText =
+        "ТРЕБУЕТ ДОРАБОТКИ";
+
+    let badge =
+        "badge-red";
+
+
+    if (
+        result.status === "partial"
+    ) {
+
+        statusText =
+            "ЧАСТИЧНО ВЫПОЛНЕНО";
+
+        badge =
+            "badge-yellow";
+
+    }
+
+
+    if (
+        result.status === "correct"
+    ) {
+
+        statusText =
+            "ВЫПОЛНЕНО";
+
+        badge =
+            "badge-green";
+    }
+
+
+    const criteriaHTML =
+        result.results
+            .map(
+                item => `
+
+                    <div
+                        class="criterion
+                        ${item.passed
+                            ? "ok"
+                            : "fail"}"
+                    >
+
+                        <span class="check">
+                            ${item.passed ? "✓" : "✕"}
+                        </span>
+
+                        <div>
+
+                            <b>
+                                ${item.title}
+                            </b>
+
+                            <div
+                                class="muted"
+                                style="margin-top:4px"
+                            >
+
+                                ${
+                                    item.passed
+                                    ? "Критерий выполнен."
+                                    : "Критерий не выполнен."
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+
+    container.innerHTML = `
+
+        <div class="analysis">
+
+            <div class="analysis-head">
+
+                <div>
+
+                    <div class="muted">
+                        AI-анализ
+                    </div>
+
+                    <div class="score">
+                        ${result.score}/${result.maxScore}
+                    </div>
+
+                </div>
+
+                <span
+                    class="status-badge ${badge}"
+                >
+                    ${statusText}
+                </span>
+
+            </div>
+
+
+            ${criteriaHTML}
+
+
+            <div class="ai-comment">
+
+                <b>AI-комментарий</b>
+
+                <p style="margin-top:7px">
+                    ${result.comment}
+                </p>
+
+            </div>
+
+
+            ${
+                result.hint
+                ? `
+                    <div class="hint">
+
+                        <b>
+                            💡 ПЕДАГОГИЧЕСКАЯ ПОДСКАЗКА
+                        </b>
+
+                        <div style="margin-top:7px">
+                            ${result.hint}
+                        </div>
+
+                    </div>
+                `
+                : ""
+            }
+
+
+            <div
+                class="ai-comment"
+            >
+
+                <b>
+                    Рекомендация
+                </b>
+
+                <p style="margin-top:7px">
+                    ${result.recommendation}
+                </p>
+
+            </div>
+
+
+            <div
+                class="actions"
+                style="margin-top:15px"
+            >
+
+                <button
+                    class="btn btn-success"
+                    onclick="teacherConfirm(${result.score})"
+                >
+                    ✓ Подтвердить
+                </button>
+
+                <button
+                    class="btn btn-warning"
+                    onclick="teacherChange()"
+                >
+                    ✎ Изменить
+                </button>
+
+                <button
+                    class="btn btn-danger"
+                    onclick="teacherReject()"
+                >
+                    ✕ Отклонить
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+   TEACHER ACTIONS
+========================================================= */
+
+function teacherConfirm(score) {
+
+    alert(
+        `AI-результат ${score}/10 подтверждён преподавателем.`
+    );
+}
+
+
+function teacherChange() {
+
+    const score =
+        prompt(
+            "Введите окончательную оценку:",
+            "8"
+        );
+
+
+    if (score === null) return;
+
+
+    alert(
+        `Итоговая оценка преподавателя: ${score}/10`
+    );
+}
+
+
+function teacherReject() {
+
+    const reason =
+        prompt(
+            "Комментарий преподавателя:",
+            "AI неправильно интерпретировал критерий."
+        );
+
+
+    if (reason === null) return;
+
+
+    alert(
+        "AI-результат отклонён.\n\n" +
+        reason
+    );
+}
+
+
+/* =========================================================
+   OPEN AI ASSISTANT
+========================================================= */
+
+function openAssistant() {
+
+    const data =
+        ai.analyzeGroup();
+
+
+    showModal(
+        "✦ AI ASSISTANT",
+        "Сводка текущего состояния группы",
+        `
+
+            <div class="stats">
+
+                <div class="stat">
+
+                    <div class="stat-number">
+                        ${data.total}
+                    </div>
+
+                    <div class="stat-label">
+                        Обучающихся
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div class="stat-number green">
+                        ${data.green}
+                    </div>
+
+                    <div class="stat-label">
+                        Уверенно работают
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div class="stat-number yellow">
+                        ${data.yellow}
+                    </div>
+
+                    <div class="stat-label">
+                        Есть ошибки
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div class="stat-number red">
+                        ${data.red}
+                    </div>
+
+                    <div class="stat-label">
+                        Нужно внимание
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-section">
+
+                <h3>
+                    AI-наблюдения
+                </h3>
+
+                <div class="report-row">
+
+                    <span>
+                        Текущий урок
+                    </span>
+
+                    <b>
+                        Основы HTML
+                    </b>
+
+                </div>
+
+                <div class="report-row">
+
+                    <span>
+                        Основная трудность
+                    </span>
+
+                    <b>
+                        HTML-структура и атрибуты
+                    </b>
+
+                </div>
+
+                <div class="report-row">
+
+                    <span>
+                        Обнаружено затруднений
+                    </span>
+
+                    <b>
+                        ${data.yellow + data.red}
+                    </b>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="hint"
+                style="margin-top:18px"
+            >
+
+                ✦ AI рекомендует преподавателю
+                обратить внимание на повторяющиеся
+                ошибки в структуре HTML.
+
+            </div>
+
+        `
+    );
+}
+
+
+/* =========================================================
+   SHOW HELP
+========================================================= */
+
+function showHelp() {
+
+    const students =
+        ai.getHelpStudents();
+
+
+    let html = "";
+
+
+    if (!students.length) {
+
+        html = `
+            <div class="notification">
+                ✓ Обучающиеся, требующие внимания,
+                не обнаружены.
+            </div>
+        `;
+
+    } else {
+
+        html =
+            students
+                .map(
+                    student => `
+
+                        <div class="help-item">
+
+                            <div class="help-top">
+
+                                <b>
+                                    ${student.computer}
+                                    — ${student.name}
+                                </b>
+
+                                <span
+                                    class="status-badge badge-red"
+                                >
+                                    Помощь
+                                </span>
+
+                            </div>
+
+                            <div class="help-reason">
+
+                                ${getHelpReason(student)}
+
+                            </div>
+
+                            <button
+                                class="btn btn-secondary"
+                                style="margin-top:10px"
+                                onclick="openStudentById(${student.id})"
+                            >
+                                Открыть рабочую тетрадь
+                            </button>
+
+                        </div>
+
+                    `
+                )
+                .join("");
+    }
+
+
+    showModal(
+        "✦ КОМУ НУЖНА ПОМОЩЬ?",
+        `Обнаружено: ${students.length}`,
+        html
+    );
+}
+
+
+/* =========================================================
+   OPEN STUDENT
+========================================================= */
+
+function openStudentById(id) {
+
+    const student =
+        ai.students.find(
+            item => item.id === id
+        );
+
+
+    if (student) {
+
+        openStudent(student);
+    }
+}
+
+
+function openStudent(student) {
+
+    let status =
+        "🟢 Работа выполняется нормально";
+
+
+    if (
+        student.status === "yellow"
+    ) {
+
+        status =
+            "🟡 Обнаружено затруднение";
+    }
+
+
+    if (
+        student.status === "red"
+    ) {
+
+        status =
+            "🔴 Рекомендуется внимание преподавателя";
+    }
+
+
+    showModal(
+
+        `${student.computer} — ${student.name}`,
+
+        "AI-анализ обучающегося",
+
+        `
+
+            <div
+                class="notification"
+                style="margin-bottom:15px"
+            >
+                ${status}
+            </div>
+
+
+            <div class="report-row">
+
+                <span>
+                    Текущее задание
+                </span>
+
+                <b>
+                    Задание №${student.currentTask}
+                </b>
+
+            </div>
+
+
+            <div class="report-row">
+
+                <span>
+                    Повторяющихся ошибок
+                </span>
+
+                <b class="red">
+                    ${student.errors}
+                </b>
+
+            </div>
+
+
+            <div class="report-row">
+
+                <span>
+                    Использовано AI-подсказок
+                </span>
+
+                <b>
+                    ${student.hints}
+                </b>
+
+            </div>
+
+
+            <div
+                class="hint"
+                style="margin-top:15px"
+            >
+
+                <b>
+                    AI-комментарий
+                </b>
+
+                <div style="margin-top:7px">
+
+                    ${
+                        student.status === "red"
+                        ? "В заданиях наблюдаются повторяющиеся ошибки. Рекомендуется проверить понимание темы."
+                        : student.status === "yellow"
+                        ? "Есть отдельные затруднения. Рекомендуется повторная проверка."
+                        : "Обучающийся уверенно выполняет текущие задания."
+                    }
+
+                </div>
+
+            </div>
+
+
+            <button
+                class="btn btn-primary"
+                style="margin-top:15px"
+                onclick="closeModal()"
+            >
+                Открыть рабочую тетрадь
+            </button>
+
+        `
+    );
+}
+
+
+/* =========================================================
+   GROUP ANALYSIS
+========================================================= */
+
+function analyzeGroup() {
+
+    const data =
+        ai.analyzeGroup();
+
+
+    showModal(
+
+        "✦ AI — ПРОАНАЛИЗИРОВАТЬ РАБОЧИЕ ТЕТРАДИ",
+
+        `${data.total} обучающихся`,
+
+        `
+
+            <div class="stats">
+
+                <div class="stat">
+
+                    <div
+                        class="stat-number green"
+                    >
+                        ${data.green}
+                    </div>
+
+                    <div class="stat-label">
+                        Выполняют уверенно
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div
+                        class="stat-number yellow"
+                    >
+                        ${data.yellow}
+                    </div>
+
+                    <div class="stat-label">
+                        Есть затруднения
+                    </div>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <div
+                        class="stat-number red"
+                    >
+                        ${data.red}
+                    </div>
+
+                    <div class="stat-label">
+                        Требуют внимания
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="report-section">
+
+                <h3>
+                    AI-вывод
+                </h3>
+
+                <div class="analysis">
+
+                    AI анализирует
+                    не одно задание, а
+                    общую траекторию работы
+                    каждого обучающегося
+                    в рамках урока.
+
+                </div>
+
+            </div>
+
+
+            <div class="report-section">
+
+                <h3>
+                    Основная рекомендация
+                </h3>
+
+                <div class="hint">
+
+                    У группы рекомендуется
+                    дополнительно закрепить
+                    работу с HTML-структурой
+                    и атрибутами.
+
+                </div>
+
+            </div>
+
+        `
+    );
+}
+
+
+/* =========================================================
+   LESSON SUMMARY
+========================================================= */
+
+function lessonSummary() {
+
+    const report =
+        ai.report();
+
+
+    showModal(
+
+        "✦ AI — ПОДВЕСТИ ИТОГ УРОКА",
+
+        "Итоговая аналитика",
+
+        `
+
+            <div class="report-section">
+
+                <h3>
+                    AI-АНАЛИЗ УРОКА
+                </h3>
+
+
+                <div class="report-row">
+
+                    <span>
+                        Обучающихся
+                    </span>
+
+                    <b>
+                        ${report.students}
+                    </b>
+
+                </div>
+
+
+                <div class="report-row">
+
+                    <span>
+                        Выполнили основное задание
+                    </span>
+
+                    <b>
+                        ${report.completed}
+                    </b>
+
+                </div>
+
+
+                <div class="report-row">
+
+                    <span>
+                        Достигли критериев
+                    </span>
+
+                    <b>
+                        ${report.criteria}
+                    </b>
+
+                </div>
+
+
+                <div class="report-row">
+
+                    <span>
+                        Требуют внимания
+                    </span>
+
+                    <b class="red">
+                        ${report.red}
+                    </b>
+
+                </div>
+
+
+                <div class="report-row">
+
+                    <span>
+                        Наиболее частая ошибка
+                    </span>
+
+                    <b>
+                        ${report.commonMistake}
+                    </b>
+
+                </div>
+
+
+                <div class="report-row">
+
+                    <span>
+                        Использовано AI-подсказок
+                    </span>
+
+                    <b>
+                        ${report.aiHints}
+                    </b>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="hint"
+                style="margin-top:18px"
+            >
+
+                <b>
+                    Рекомендация для следующего занятия
+                </b>
+
+                <div style="margin-top:7px">
+
+                    ${report.recommendation}
+
+                </div>
+
+            </div>
+
+        `
+    );
+}
+
+
+/* =========================================================
+   EXPORT REPORT
+========================================================= */
+
+function exportReport() {
+
+    const report =
+        ai.report();
+
+
+    const text = `
+
+AI LESSON REPORT
+=========================
+
+Тема:
+Основы HTML
+
+Количество обучающихся:
+${report.students}
+
+Выполнили основное задание:
+${report.completed}
+
+Достигли критериев:
+${report.criteria}
+
+Уверенно работают:
+${report.green}
+
+Есть затруднения:
+${report.yellow}
+
+Требуют внимания:
+${report.red}
+
+Наиболее частая ошибка:
+${report.commonMistake}
+
+Количество AI-подсказок:
+${report.aiHints}
+
+Рекомендация:
+${report.recommendation}
+
+Дата:
+${new Date().toLocaleString("ru-RU")}
+
+    `;
+
+
+    const blob =
+        new Blob(
+            [text],
+            { type: "text/plain;charset=utf-8" }
+        );
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const a =
+        document.createElement("a");
+
+
+    a.href = url;
+
+    a.download =
+        "AI-Lesson-Report.txt";
+
+
+    a.click();
+
+
+    URL.revokeObjectURL(url);
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function showModal(
+    title,
+    subtitle,
+    body
+) {
+
+    document.getElementById(
+        "modalTitle"
+    ).textContent =
+        title;
+
+
+    document.getElementById(
+        "modalSubtitle"
+    ).textContent =
+        subtitle;
+
+
+    document.getElementById(
+        "modalBody"
+    ).innerHTML =
+        body;
+
+
+    document.getElementById(
+        "modal"
+    ).classList.add(
+        "active"
+    );
+}
+
+
+function closeModal() {
+
+    document.getElementById(
+        "modal"
+    ).classList.remove(
+        "active"
+    );
+}
+
+
+/* =========================================================
+   CLEAR
+========================================================= */
+
+function clearCode() {
+
+    document.getElementById(
+        "studentCode"
+    ).value = "";
+
+
+    document.getElementById(
+        "analysisResult"
+    ).innerHTML = "";
+}
+
+
+/* =========================================================
+   CLOSE MODAL BY CLICK OUTSIDE
+========================================================= */
+
+document.getElementById(
+    "modal"
+).addEventListener(
+    "click",
+    event => {wwwadwa
+
+        if (
+            event.target.id === "modal"
+        ) {
+
+            closeModal();
+        }
+    }
+);
+
+
+/* =========================================================
+   INITIAL RENDER
+========================================================= */
+
+renderClassMap();
+renderStudents();
+updateStats();
+renderNotifications();
+renderHelp();
+
+
+/* =========================================================
+   LIVE UPDATE
+========================================================= */
+
+setInterval(
+    () => {
+
+        updateStats();
+        renderNotifications();
+        renderHelp();
+
+    },
+    5000
+);
+</script>
+
+</body>
+</html>
